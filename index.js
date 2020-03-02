@@ -21,7 +21,7 @@
       root.DeepDiff = deepDiff;
   }
 }(this, function(root) {
-  var validKinds = ['N', 'E', 'A', 'D'];
+  var validKinds = ['N', 'E', 'A', 'D', 'C'];
 
   // nodejs compatible on server side and in the browser.
   function inherits(ctor, superCtor) {
@@ -49,8 +49,8 @@
     }
   }
 
-  function DiffEdit(path, origin, value) {
-    DiffEdit.super_.call(this, 'E', path);
+  function DiffEdit(path, origin, value, isCycle) {
+    DiffEdit.super_.call(this, isCycle ? 'C' : 'E', path);
     Object.defineProperty(this, 'lhs', {
       value: origin,
       enumerable: true
@@ -211,9 +211,9 @@
     } else if (!rdefined && ldefined) {
       changes.push(new DiffDeleted(currentPath, lhs));
     } else if (realTypeOf(lhs) !== realTypeOf(rhs)) {
-      changes.push(new DiffEdit(currentPath, lhs, rhs));
+      changes.push(new DiffEdit(currentPath, lhs, rhs, false));
     } else if (realTypeOf(lhs) === 'date' && (lhs - rhs) !== 0) {
-      changes.push(new DiffEdit(currentPath, lhs, rhs));
+      changes.push(new DiffEdit(currentPath, lhs, rhs, false));
     } else if (ltype === 'object' && lhs !== null && rhs !== null) {
       for (i = stack.length - 1; i > -1; --i) {
         if (stack[i].lhs === lhs) {
@@ -268,11 +268,11 @@
         stack.length = stack.length - 1;
       } else if (lhs !== rhs) {
         // lhs is contains a cycle at this element and it differs from rhs
-        changes.push(new DiffEdit(currentPath, lhs, rhs));
+        changes.push(new DiffEdit(currentPath, lhs, rhs, true));
       }
     } else if (lhs !== rhs) {
       if (!(ltype === 'number' && isNaN(lhs) && isNaN(rhs))) {
-        changes.push(new DiffEdit(currentPath, lhs, rhs));
+        changes.push(new DiffEdit(currentPath, lhs, rhs, false));
       }
     }
   }
